@@ -150,7 +150,6 @@ alignment-evals/
 │   ├── analyze.py                       # Statistical computation and chart generation
 │   ├── client.py                        # Unified multi-provider asynchronous client
 │   └── judge.py                         # LLM-as-a-judge evaluators and trusted editor
-├── .env.example                         # Environment configuration template
 ├── CONTRIBUTING.md                      # Contribution guidelines and research ethics
 ├── LICENSE                              # Apache 2.0 open-source license
 ├── README.md                            # Repository technical documentation

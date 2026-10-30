@@ -80,10 +80,12 @@ AI safety research often touches on threat models such as backdoor insertion, ev
    ```
 
 4. **Configure environment variables:**
+   Create a `.env` file in the root directory (or use environment variables):
    ```bash
-   cp .env.example .env
+   # In .env:
+   GROQ_API_KEY=your_key_here
+   DEFAULT_PROVIDER=groq  # or 'mock' for testing without keys
    ```
-   Edit `.env` with your API keys or set `DEFAULT_PROVIDER=mock` for testing.
 
 ### Quick Smoke Test (No API Key Required)
 
