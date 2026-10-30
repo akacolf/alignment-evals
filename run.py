@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Alignment Weekend Evals CLI
+"""Alignment Evals CLI
 Run high-leverage experiments inspired by Anthropic's 2025 Recommended Directions.
 """
 
@@ -18,12 +18,14 @@ from src.evaluators.cot_faithfulness import run_cot_experiment
 from src.evaluators.ai_control_monitor import run_ai_control_experiment
 from src.evaluators.eval_awareness import run_eval_awareness_experiment
 from src.evaluators.multiturn_sycophancy import run_multiturn_sycophancy_experiment
+from src.evaluators.scaling_comparison import run_scaling_comparison_experiment
 from src.analyze import (
     analyze_persona_results,
     analyze_cot_results,
     analyze_control_results,
     analyze_eval_awareness_results,
     analyze_multiturn_sycophancy_results,
+    analyze_scaling_results,
 )
 
 console = Console()
@@ -36,7 +38,7 @@ async def main():
     parser.add_argument(
         "--experiment",
         "-e",
-        choices=["persona", "cot", "control", "awareness", "sycophancy", "all"],
+        choices=["persona", "cot", "control", "awareness", "sycophancy", "scaling", "all"],
         default="control",
         help="Which experiment to execute (default: control)",
     )
@@ -72,7 +74,9 @@ async def main():
     # Handle analyze-only mode
     if args.analyze_only:
         filepath = args.analyze_only
-        if "persona" in filepath:
+        if "scaling" in filepath:
+            analyze_scaling_results(filepath)
+        elif "persona" in filepath:
             analyze_persona_results(filepath)
         elif "sycophancy" in filepath:
             analyze_multiturn_sycophancy_results(filepath)
@@ -146,6 +150,19 @@ async def main():
                         f.write(json.dumps(r) + "\n")
                 console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
                 analyze_multiturn_sycophancy_results(out_file)
+
+            elif exp == "scaling":
+                results = await run_scaling_comparison_experiment(
+                    provider=client.provider,
+                    tasks_limit=min(args.limit, 4),
+                    sycophancy_limit=5,
+                    cot_limit=4,
+                )
+                with open(out_file, "w", encoding="utf-8") as f:
+                    for r in results:
+                        f.write(json.dumps(r) + "\n")
+                console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
+                analyze_scaling_results(out_file)
 
     finally:
         await client.close()

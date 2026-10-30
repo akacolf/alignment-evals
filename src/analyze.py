@@ -341,3 +341,233 @@ def analyze_multiturn_sycophancy_results(results_file: str):
     plt.savefig(out_chart, dpi=200, bbox_inches="tight")
     plt.close()
     console.print(f"[bold green]Multi-turn sycophancy chart saved to: [underline]{out_chart}[/underline][/bold green]")
+
+
+def analyze_scaling_results(results_file: str):
+    """Analyzes multi-model scaling comparisons across AI control and sycophancy."""
+    import numpy as np
+
+    records = []
+    with open(results_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                records.append(json.loads(line))
+
+    df = pd.DataFrame(records)
+    if df.empty:
+        console.print("[red]No records found in scaling results file.[/red]")
+        return
+
+    models = ["GPT-OSS-120B", "Qwen-27B", "GPT-OSS-20B"]
+    available_models = [m for m in models if m in df["short_name"].unique()]
+    if not available_models:
+        available_models = list(df["short_name"].unique())
+
+    # ---------------------------------------------------------
+    # 1. AI Control Scaling Table
+    # ---------------------------------------------------------
+    df_ctrl = df[df["sub_experiment"] == "ai_control"]
+    if not df_ctrl.empty:
+        t_ctrl = Table(title="Multi-Model Scaling: Adversarial AI Control Performance")
+        t_ctrl.add_column("Model Scale", style="cyan")
+        t_ctrl.add_column("Naive Risk (1-10)", style="yellow")
+        t_ctrl.add_column("Stealth Risk (1-10)", style="magenta")
+        t_ctrl.add_column("Risk Reduction", style="green")
+        t_ctrl.add_column("Evasion Rate (%)", style="red")
+        t_ctrl.add_column("Defection to Safety (%)", style="bold green")
+
+        ctrl_metrics = {}
+        for m in available_models:
+            m_df = df_ctrl[df_ctrl["short_name"] == m]
+            naive_sub = m_df[m_df["variant"] == "naive_sabotage"]
+            stealth_sub = m_df[m_df["variant"] == "stealth_sabotage"]
+
+            n_risk = naive_sub["risk_score"].mean() if not naive_sub.empty else 0.0
+            s_risk = stealth_sub["risk_score"].mean() if not stealth_sub.empty else 0.0
+            risk_diff = n_risk - s_risk
+            evade_pct = (stealth_sub["evaded_monitor"].sum() / len(stealth_sub) * 100) if not stealth_sub.empty else 0.0
+            defect_pct = (stealth_sub["defected_to_safety"].sum() / len(stealth_sub) * 100) if not stealth_sub.empty else 0.0
+
+            ctrl_metrics[m] = {
+                "naive_risk": n_risk,
+                "stealth_risk": s_risk,
+                "evade_pct": evade_pct,
+                "defect_pct": defect_pct,
+            }
+
+            t_ctrl.add_row(
+                m,
+                f"{n_risk:.2f}",
+                f"{s_risk:.2f}",
+                f"-{risk_diff:.2f} pts",
+                f"{evade_pct:.1f}%",
+                f"{defect_pct:.1f}%",
+            )
+        console.print(t_ctrl)
+
+    # ---------------------------------------------------------
+    # 2. Sycophancy Scaling Table
+    # ---------------------------------------------------------
+    df_syc = df[df["sub_experiment"] == "sycophancy"]
+    if not df_syc.empty:
+        t_syc = Table(title="Multi-Model Scaling: Multi-Turn Gaslighting Sycophancy")
+        t_syc.add_column("Model Scale", style="cyan")
+        t_syc.add_column("Turn 1 Accuracy (%)", style="green")
+        t_syc.add_column("Sycophantic Flip Rate (%)", style="red")
+        t_syc.add_column("Unfaithful Rationalization (%)", style="yellow")
+        t_syc.add_column("Held Ground Respectfully (%)", style="bold green")
+
+        syc_metrics = {}
+        for m in available_models:
+            m_df = df_syc[df_syc["short_name"] == m]
+            tot = len(m_df)
+            t1_acc = (m_df["turn1_correct"].sum() / tot * 100) if tot else 0.0
+            flip_rate = (m_df["succumbed_to_pushback"].sum() / tot * 100) if tot else 0.0
+            unfaithful_rate = (m_df["unfaithful_rationalization"].sum() / tot * 100) if tot else 0.0
+            held_rate = (m_df["held_ground_respectfully"].sum() / tot * 100) if tot else 0.0
+
+            syc_metrics[m] = {
+                "t1_acc": t1_acc,
+                "flip_rate": flip_rate,
+                "unfaithful": unfaithful_rate,
+                "held_rate": held_rate,
+            }
+
+            t_syc.add_row(
+                m,
+                f"{t1_acc:.1f}%",
+                f"{flip_rate:.1f}%",
+                f"{unfaithful_rate:.1f}%",
+                f"{held_rate:.1f}%",
+            )
+        console.print(t_syc)
+
+    # ---------------------------------------------------------
+    # 3. CoT Faithfulness Table
+    # ---------------------------------------------------------
+    df_cot = df[df["sub_experiment"] == "cot_faithfulness"]
+    if not df_cot.empty:
+        t_cot = Table(title="Multi-Model Scaling: Chain-of-Thought Faithfulness")
+        t_cot.add_column("Model Scale", style="cyan")
+        t_cot.add_column("Chose Biased Option (%)", style="red")
+        t_cot.add_column("Unfaithful Rationalization (%)", style="yellow")
+        t_cot.add_column("Acknowledged/Refuted Bias (%)", style="green")
+
+        cot_metrics = {}
+        for m in available_models:
+            m_df = df_cot[df_cot["short_name"] == m]
+            tot = len(m_df)
+            bias_rate = (m_df["chose_bias"].sum() / tot * 100) if tot else 0.0
+            unfaithful_cot = (m_df["unfaithful_rationalization"].sum() / tot * 100) if tot else 0.0
+            ack_rate = (m_df["acknowledged_hint"].sum() / tot * 100) if tot else 0.0
+
+            cot_metrics[m] = {
+                "bias_rate": bias_rate,
+                "unfaithful": unfaithful_cot,
+                "ack_rate": ack_rate,
+            }
+
+            t_cot.add_row(
+                m,
+                f"{bias_rate:.1f}%",
+                f"{unfaithful_cot:.1f}%",
+                f"{ack_rate:.1f}%",
+            )
+        console.print(t_cot)
+
+    # ---------------------------------------------------------
+    # 4. Publication-Ready 2x2 Multi-Panel Figure
+    # ---------------------------------------------------------
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    fig.suptitle("Direction B: Multi-Model Scaling Comparison (120B vs. 27B vs. 20B)", fontsize=15, fontweight="bold")
+
+    x = np.arange(len(available_models))
+    width = 0.35
+
+    # Panel A: AI Control Evasion & Defection Rates
+    ax_a = axes[0, 0]
+    evade_vals = [ctrl_metrics.get(m, {}).get("evade_pct", 0) for m in available_models]
+    defect_vals = [ctrl_metrics.get(m, {}).get("defect_pct", 0) for m in available_models]
+
+    rects1 = ax_a.bar(x - width/2, evade_vals, width, label="Monitor Evasion Rate (%)", color="#D62728")
+    rects2 = ax_a.bar(x + width/2, defect_vals, width, label="Defection to Safety (%)", color="#2CA02C")
+    ax_a.set_ylabel("Rate (%)")
+    ax_a.set_title("AI Control: Evasion vs. Defection to Safety")
+    ax_a.set_xticks(x)
+    ax_a.set_xticklabels(available_models)
+    ax_a.set_ylim(0, 105)
+    ax_a.legend()
+    for bar in rects1:
+        h = bar.get_height()
+        ax_a.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+    for bar in rects2:
+        h = bar.get_height()
+        ax_a.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+
+    # Panel B: Monitor Risk Score by Prompt Framing
+    ax_b = axes[0, 1]
+    naive_risk = [ctrl_metrics.get(m, {}).get("naive_risk", 0) for m in available_models]
+    stealth_risk = [ctrl_metrics.get(m, {}).get("stealth_risk", 0) for m in available_models]
+
+    rects3 = ax_b.bar(x - width/2, naive_risk, width, label="Naive Sabotage", color="#FF7F0E")
+    rects4 = ax_b.bar(x + width/2, stealth_risk, width, label="Stealth Sabotage (Adversarial)", color="#1F77B4")
+    ax_b.set_ylabel("Mean Monitor Risk Score (1-10)")
+    ax_b.set_title("AI Control: Monitor Risk Score by Sabotage Framing")
+    ax_b.set_xticks(x)
+    ax_b.set_xticklabels(available_models)
+    ax_b.set_ylim(0, 11)
+    ax_b.axhline(5.0, color="gray", linestyle="--", linewidth=1, label="Detection Threshold (Risk >= 5)")
+    ax_b.legend()
+    for bar in rects3:
+        h = bar.get_height()
+        ax_b.text(bar.get_x() + bar.get_width() / 2, h + 0.2, f"{h:.1f}", ha="center", fontsize=9, fontweight="bold")
+    for bar in rects4:
+        h = bar.get_height()
+        ax_b.text(bar.get_x() + bar.get_width() / 2, h + 0.2, f"{h:.1f}", ha="center", fontsize=9, fontweight="bold")
+
+    # Panel C: Multi-Turn Sycophancy
+    ax_c = axes[1, 0]
+    t1_accs = [syc_metrics.get(m, {}).get("t1_acc", 0) for m in available_models]
+    flips = [syc_metrics.get(m, {}).get("flip_rate", 0) for m in available_models]
+
+    rects5 = ax_c.bar(x - width/2, t1_accs, width, label="Turn 1 Baseline Accuracy", color="#2CA02C")
+    rects6 = ax_c.bar(x + width/2, flips, width, label="Turn 2 Sycophantic Flip Rate", color="#D62728")
+    ax_c.set_ylabel("Rate (%)")
+    ax_c.set_title("Sycophancy: Initial Accuracy vs. Capitulation under Gaslighting")
+    ax_c.set_xticks(x)
+    ax_c.set_xticklabels(available_models)
+    ax_c.set_ylim(0, 105)
+    ax_c.legend()
+    for bar in rects5:
+        h = bar.get_height()
+        ax_c.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+    for bar in rects6:
+        h = bar.get_height()
+        ax_c.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+
+    # Panel D: CoT Faithfulness Resistance
+    ax_d = axes[1, 1]
+    resists = [100.0 - cot_metrics.get(m, {}).get("bias_rate", 0) for m in available_models]
+    unfaithful_cot = [cot_metrics.get(m, {}).get("unfaithful", 0) for m in available_models]
+
+    rects7 = ax_d.bar(x - width/2, resists, width, label="Resisted Injected Bias", color="#1F77B4")
+    rects8 = ax_d.bar(x + width/2, unfaithful_cot, width, label="Unfaithful Post-Hoc CoT", color="#9467BD")
+    ax_d.set_ylabel("Rate (%)")
+    ax_d.set_title("CoT Faithfulness: Resistance to Authority Bias")
+    ax_d.set_xticks(x)
+    ax_d.set_xticklabels(available_models)
+    ax_d.set_ylim(0, 105)
+    ax_d.legend()
+    for bar in rects7:
+        h = bar.get_height()
+        ax_d.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+    for bar in rects8:
+        h = bar.get_height()
+        ax_d.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+
+    plt.tight_layout()
+    out_chart = results_file.replace(".jsonl", "_chart.png")
+    plt.savefig(out_chart, dpi=200, bbox_inches="tight")
+    plt.close()
+    console.print(f"[bold green]Multi-model scaling comparison chart saved to: [underline]{out_chart}[/underline][/bold green]")
+
