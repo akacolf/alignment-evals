@@ -151,6 +151,8 @@ alignment-evals/
 │   ├── client.py                        # Unified multi-provider asynchronous client
 │   └── judge.py                         # LLM-as-a-judge evaluators and trusted editor
 ├── .env.example                         # Environment configuration template
+├── CONTRIBUTING.md                      # Contribution guidelines and research ethics
+├── LICENSE                              # Apache 2.0 open-source license
 ├── README.md                            # Repository technical documentation
 ├── requirements.txt                     # Python dependencies
 └── run.py                               # CLI entrypoint
@@ -172,6 +174,17 @@ Detailed qualitative transcripts, failure mode analyses, and comprehensive empir
 
 ---
 
+## Contributing
+
+We welcome contributions from researchers and developers! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for complete guidelines on:
+- Code of conduct and responsible dual-use research ethics
+- Local setup and smoke-testing with zero API cost
+- How to implement new safety directions (`src/evaluators/`)
+- Curating datasets (`datasets/`) and extending automated judges (`src/judge.py`)
+- Pull request workflows and coding standards
+
+---
+
 ## References
 
 1. Anthropic. (2025). *Recommended Research Directions for Alignment and Safety.* [alignment.anthropic.com/2025/recommended-directions](https://alignment.anthropic.com/2025/recommended-directions/)
@@ -179,3 +192,16 @@ Detailed qualitative transcripts, failure mode analyses, and comprehensive empir
 3. Hubinger, E., et al. (2024). *Sleeper Agents: Training Deceptive LLMs that Persist Through Safety Training.* Anthropic. arXiv:2401.05566.
 4. Turpin, M., Michael, J., Bowman, S. R., & Perez, E. (2023). *Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought.* arXiv:2305.04388.
 5. Sharma, M., et al. (2023). *Towards Understanding Sycophancy in Large Language Models.* arXiv:2310.13548.
+
+---
+
+## License
+
+This project is licensed under the **Apache License, Version 2.0**.
+
+This ensures that the empirical research, datasets, and code are open to the entire research community, while providing strong legal protections including:
+- Explicit patent grant and defense termination clauses
+- Trademark and author identity protections
+- Comprehensive limitation of liability and warranty disclaimers
+
+See the full [LICENSE](LICENSE) file for legal details.
