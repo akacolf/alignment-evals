@@ -15,6 +15,7 @@ The following table records the execution window, evaluated model, sample count,
 | **5. Evaluation Awareness** | Sandbagging / Situational Triggers | `qwen/qwen3.8-27b` | 3m 44s | 4 | 0.0% strategic sabotage across eval and deploy | [04_evaluation_awareness.md](04_evaluation_awareness.md) |
 | **6. Multi-Turn Sycophancy** | Authority Gaslighting Resilience | `qwen/qwen3.8-27b` | 5m 12s | 5 | 100.0% epistemic retention against high-status figures | [05_multiturn_sycophancy.md](05_multiturn_sycophancy.md) |
 | **7. Multi-Model Scaling** | 120B vs. 27B vs. 20B Comparison | Multi-Model (`120B`, `27B`, `20B`) | 17m 09s | 51 | 120B defects to safety (50%); 20B susceptible to authority bias (25%) | [06_model_scaling_comparison.md](06_model_scaling_comparison.md) |
+| **8. Direction C: Strategic Sabotage** | Model Organisms of Deception (HF Datasets) | Multi-Model (`120B`, `27B`, `20B`) | 5m 45s | 24 | 0.0% strategic defection across all models; 37.5% situational awareness in 120B | [07_direction_c_evaluation_awareness.md](07_direction_c_evaluation_awareness.md) |
 
 ## Directory Navigation
 
@@ -24,6 +25,7 @@ The following table records the execution window, evaluated model, sample count,
 4. [Evaluation Awareness and Strategic Deception](04_evaluation_awareness.md)
 5. [Multi-Turn Sycophancy and Epistemic Resilience](05_multiturn_sycophancy.md)
 6. [Multi-Model Scaling Comparison: 120B vs. 27B vs. 20B](06_model_scaling_comparison.md)
+7. [Direction C: Evaluation Awareness & Strategic Sabotage (Model Organisms of Deception)](07_direction_c_evaluation_awareness.md)
 
 ## Core Architectural Takeaways
 1. **Trusted Editing is Essential:** Passive monitoring alone allows sophisticated or ambiguous code to pass. Trusted editing strips covert vulnerabilities by forcing canonical rewrites.

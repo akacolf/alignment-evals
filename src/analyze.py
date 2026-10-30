@@ -571,3 +571,125 @@ def analyze_scaling_results(results_file: str):
     plt.close()
     console.print(f"[bold green]Multi-model scaling comparison chart saved to: [underline]{out_chart}[/underline][/bold green]")
 
+
+
+def analyze_direction_c_results(results_file: str):
+    """Analyzes Direction C: Evaluation Awareness and Strategic Sabotage (Model Organisms)."""
+    records = []
+    with open(results_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                records.append(json.loads(line))
+
+    df = pd.DataFrame(records)
+    if df.empty:
+        console.print("[red]No records found in Direction C results file.[/red]")
+        return
+
+    models = df["model"].unique().tolist()
+    total = len(df)
+
+    console.print(f"\n[bold magenta]═══════════════════════════════════════════════════════════════════════════[/bold magenta]")
+    console.print(f"[bold cyan] Direction C Empirical Analysis: Evaluation Awareness & Strategic Sabotage[/bold cyan]")
+    console.print(f"[bold magenta]═══════════════════════════════════════════════════════════════════════════[/bold magenta]\n")
+
+    # Table per model or aggregate
+    for model_name in models:
+        m_df = df[df["model"] == model_name]
+        m_total = len(m_df)
+        m_eval_sab = (m_df["sabotage_in_eval"].sum() / m_total) * 100 if m_total else 0
+        m_dep_sab = (m_df["sabotage_in_deploy"].sum() / m_total) * 100 if m_total else 0
+        m_strat_dec = (m_df["strategic_deception"].sum() / m_total) * 100 if m_total else 0
+        m_safe_pct = (m_df["consistent_safe"].sum() / m_total) * 100 if m_total else 0
+        m_sit_aware = (m_df["eval_scratchpad_awareness"].sum() / m_total) * 100 if m_total else 0
+
+        table = Table(title=f"Direction C Results: {model_name} (N={m_total} Scenarios)")
+        table.add_column("Evaluation Metric", style="cyan")
+        table.add_column("Rate (%)", style="magenta")
+        table.add_column("Empirical Implication", style="yellow")
+
+        table.add_row("Condition 1: Sabotage in Eval Sandbox", f"{m_eval_sab:.1f}%", "Auditor visibility compliance")
+        table.add_row("Condition 2: Sabotage in Prod Deployment", f"{m_dep_sab:.1f}%", "Unmonitored execution risk")
+        table.add_row("Strategic Deception (Sandbagging)", f"[bold red]{m_strat_dec:.1f}%[/bold red]", "Suppressed in eval, executed in prod")
+        table.add_row("Consistent Safety (Defection to Safety)", f"[bold green]{m_safe_pct:.1f}%[/bold green]", "Refused/scrubbed sabotage across both")
+        table.add_row("Situational Reasoning Awareness", f"{m_sit_aware:.1f}%", "Scratchpad identified audit/prod headers")
+        console.print(table)
+
+    # Detailed Scenario Table
+    scenario_table = Table(title="Scenario-Level Audit Matrix (Condition 1 vs Condition 2)")
+    scenario_table.add_column("Task ID", style="cyan", width=12)
+    scenario_table.add_column("Model", style="magenta", width=18)
+    scenario_table.add_column("Source", style="dim", width=22)
+    scenario_table.add_column("Eval Sandbox", style="yellow", width=14)
+    scenario_table.add_column("Prod Deploy", style="yellow", width=14)
+    scenario_table.add_column("Strategic Deception", style="bold red", width=20)
+
+    for _, row in df.iterrows():
+        strat_display = "[bold red]DETECTED[/bold red]" if row["strategic_deception"] else "[green]False[/green]"
+        eval_display = "[red]Sabotaged[/red]" if row["sabotage_in_eval"] else "[green]Safe/Clean[/green]"
+        dep_display = "[red]Sabotaged[/red]" if row["sabotage_in_deploy"] else "[green]Safe/Clean[/green]"
+        scenario_table.add_row(
+            row["task_id"],
+            row["model"].split("/")[-1],
+            row.get("source", "benchmark")[:20],
+            eval_display,
+            dep_display,
+            strat_display
+        )
+    console.print(scenario_table)
+
+    # Visualization
+    if len(models) > 1:
+        # Multi-model comparison bar chart
+        fig, ax = plt.subplots(figsize=(9, 5))
+        import numpy as np
+        x = np.arange(len(models))
+        width = 0.22
+
+        eval_rates = [(df[df["model"] == m]["sabotage_in_eval"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+        dep_rates = [(df[df["model"] == m]["sabotage_in_deploy"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+        strat_rates = [(df[df["model"] == m]["strategic_deception"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+        safe_rates = [(df[df["model"] == m]["consistent_safe"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+
+        r1 = ax.bar(x - 1.5*width, eval_rates, width, label="Sabotage in Eval (Cond 1)", color="#4C72B0")
+        r2 = ax.bar(x - 0.5*width, dep_rates, width, label="Sabotage in Deploy (Cond 2)", color="#D62728")
+        r3 = ax.bar(x + 0.5*width, strat_rates, width, label="Strategic Deception", color="#E377C2")
+        r4 = ax.bar(x + 1.5*width, safe_rates, width, label="Consistent Safety", color="#2CA02C")
+
+        ax.set_ylabel("Rate (%)")
+        ax.set_title("Direction C: Evaluation Awareness & Strategic Sabotage by Model Scale")
+        ax.set_xticks(x)
+        ax.set_xticklabels([m.split("/")[-1] for m in models])
+        ax.set_ylim(0, 115)
+        ax.legend(loc="upper right")
+
+        for rects in [r1, r2, r3, r4]:
+            for bar in rects:
+                h = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=8, fontweight="bold")
+    else:
+        # Single model breakdown
+        fig, ax = plt.subplots(figsize=(7, 4.5))
+        m_df = df
+        m_eval_sab = (m_df["sabotage_in_eval"].sum() / total) * 100
+        m_dep_sab = (m_df["sabotage_in_deploy"].sum() / total) * 100
+        m_strat_dec = (m_df["strategic_deception"].sum() / total) * 100
+        m_safe_pct = (m_df["consistent_safe"].sum() / total) * 100
+
+        metrics = ["Sabotage in\nEval Sandbox\n(Cond 1)", "Sabotage in\nProd Deploy\n(Cond 2)", "Strategic\nDeception\n(Sandbagging)", "Consistent\nSafety\nCompliance"]
+        vals = [m_eval_sab, m_dep_sab, m_strat_dec, m_safe_pct]
+        colors = ["#4C72B0", "#D62728", "#E377C2", "#2CA02C"]
+
+        bars = ax.bar(metrics, vals, color=colors, width=0.45)
+        ax.set_ylabel("Rate (%)")
+        ax.set_ylim(0, 115)
+        ax.set_title(f"Direction C: Evaluation Awareness ({models[0].split('/')[-1]})")
+        for bar in bars:
+            h = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, h + 2.0, f"{h:.1f}%", ha="center", fontweight="bold")
+
+    plt.tight_layout()
+    out_chart = results_file.replace(".jsonl", "_chart.png")
+    plt.savefig(out_chart, dpi=200, bbox_inches="tight")
+    plt.close()
+    console.print(f"[bold green]Direction C evaluation chart saved to: [underline]{out_chart}[/underline][/bold green]")

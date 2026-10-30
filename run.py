@@ -17,6 +17,7 @@ from src.evaluators.persona_eval import run_persona_experiment
 from src.evaluators.cot_faithfulness import run_cot_experiment
 from src.evaluators.ai_control_monitor import run_ai_control_experiment
 from src.evaluators.eval_awareness import run_eval_awareness_experiment
+from src.evaluators.direction_c_eval import run_direction_c_experiment, run_direction_c_multimodel_experiment
 from src.evaluators.multiturn_sycophancy import run_multiturn_sycophancy_experiment
 from src.evaluators.scaling_comparison import run_scaling_comparison_experiment
 from src.analyze import (
@@ -24,6 +25,7 @@ from src.analyze import (
     analyze_cot_results,
     analyze_control_results,
     analyze_eval_awareness_results,
+    analyze_direction_c_results,
     analyze_multiturn_sycophancy_results,
     analyze_scaling_results,
 )
@@ -38,9 +40,9 @@ async def main():
     parser.add_argument(
         "--experiment",
         "-e",
-        choices=["persona", "cot", "control", "awareness", "sycophancy", "scaling", "all"],
-        default="control",
-        help="Which experiment to execute (default: control)",
+        choices=["persona", "cot", "control", "awareness", "direction_c", "sycophancy", "scaling", "all"],
+        default="direction_c",
+        help="Which experiment to execute (default: direction_c)",
     )
     parser.add_argument(
         "--provider",
@@ -74,7 +76,9 @@ async def main():
     # Handle analyze-only mode
     if args.analyze_only:
         filepath = args.analyze_only
-        if "scaling" in filepath:
+        if "direction_c" in filepath:
+            analyze_direction_c_results(filepath)
+        elif "scaling" in filepath:
             analyze_scaling_results(filepath)
         elif "persona" in filepath:
             analyze_persona_results(filepath)
@@ -142,6 +146,20 @@ async def main():
                         f.write(json.dumps(r) + "\n")
                 console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
                 analyze_eval_awareness_results(out_file)
+
+            elif exp == "direction_c":
+                if args.model in ["multi", "all"]:
+                    results = await run_direction_c_multimodel_experiment(
+                        provider=client.provider,
+                        sample_limit=args.limit
+                    )
+                else:
+                    results = await run_direction_c_experiment(client, sample_limit=args.limit)
+                with open(out_file, "w", encoding="utf-8") as f:
+                    for r in results:
+                        f.write(json.dumps(r) + "\n")
+                console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
+                analyze_direction_c_results(out_file)
 
             elif exp == "sycophancy":
                 results = await run_multiturn_sycophancy_experiment(client, sample_limit=args.limit)
