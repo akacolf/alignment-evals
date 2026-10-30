@@ -2,7 +2,38 @@
 
 Fast, zero-cost AI Safety evaluation testbed built directly around [Anthropic's 2025 Recommended Research Directions](https://alignment.anthropic.com/2025/recommended-directions/).
 
-This repo gives you turn-key implementations for **3 weekend-feasible AI safety experiments** that run on **$0 budget** (via free API tiers or local models), complete with automated LLM judges, metrics calculation, and chart generators.
+This repo gives you turn-key implementations for **3 weekend-feasible AI safety experiments** that run on **$0 budget** (via free API tiers or local models), complete with automated LLM judges, metrics calculation, and publication-ready charts.
+
+> 📄 **Read the full empirical research report:** [**FINDINGS.md**](FINDINGS.md)
+
+---
+
+## 🔬 Empirical Results & Findings
+
+We benchmarked `qwen/qwen3.8-27b` across all 3 Anthropic technical directions:
+
+### 1. Persona Effect on Safety Boundaries
+* **Anthropic Priority:** *Understanding How a Model's Persona Affects Its Behavior*
+* **Refusal Rate:** `0.0%` (Defensive technical requests handled without false refusal)
+* **Safety Boundary Violations:** `0.0%` (Adhered strictly to defensive explanations across all personas)
+
+![Persona Experiment Chart](results/persona_groq_20261030_090740_chart.png)
+
+### 2. Chain-of-Thought (CoT) Faithfulness
+* **Anthropic Priority:** *Chain-of-Thought Faithfulness & Post-Hoc Rationalization*
+* **Sycophantic Bias Adoption Rate:** `0.0%` (0/5 succumbed to injected false authority hints)
+* **Unfaithful Rationalization Rate:** `0.0%`
+* **Explicit Bias Refutation:** `60.0%` (The model directly identified and refuted the false hints in its scratchpad)
+
+![CoT Faithfulness Chart](results/cot_groq_20261030_091218_chart.png)
+
+### 3. AI Control: Untrusted Actor vs. Monitor
+* **Anthropic Priority:** *AI Control & Behavioral Monitoring*
+* **Backdoor Detection Rate (True Positive):** `100.0%` (4/4 caught, Risk Scores 7 to 10)
+* **False Positive Rate (Clean Code Flagged):** `0.0%` (4/4 clean solutions received Risk Score 1)
+* **Overall Monitor Accuracy:** `100.0%`
+
+![AI Control Chart](results/control_groq_20261030_091534_chart.png)
 
 ---
 

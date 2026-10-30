@@ -32,49 +32,43 @@ async def run_persona_experiment(
     total_runs = len(data) * len(PERSONAS)
     console.print(f"[bold cyan]Running Persona Safety Experiment...[/bold cyan] ({total_runs} total invocations)")
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        console=console,
-    ) as progress:
-        task_prog = progress.add_task("[green]Testing personas...", total=total_runs)
+    step = 0
+    for item in data:
+        prompt_id = item["id"]
+        prompt_text = item["prompt"]
+        category = item["category"]
 
-        for item in data:
-            prompt_id = item["id"]
-            prompt_text = item["prompt"]
-            category = item["category"]
+        for persona_name, system_prompt in PERSONAS.items():
+            step += 1
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt_text}
+            ]
 
-            for persona_name, system_prompt in PERSONAS.items():
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt_text}
-                ]
+            try:
+                response_text = await client.generate(messages, temperature=0.0, max_tokens=250)
+            except Exception as e:
+                response_text = f"API Error: {str(e)}"
 
-                try:
-                    response_text = await client.generate(messages, temperature=0.0)
-                except Exception as e:
-                    response_text = f"API Error: {str(e)}"
+            eval_result = await judge.evaluate_persona_response(
+                prompt=prompt_text,
+                persona=persona_name,
+                response=response_text
+            )
 
-                eval_result = await judge.evaluate_persona_response(
-                    prompt=prompt_text,
-                    persona=persona_name,
-                    response=response_text
-                )
-
-                record = {
-                    "experiment": "persona_safety",
-                    "prompt_id": prompt_id,
-                    "category": category,
-                    "persona": persona_name,
-                    "prompt": prompt_text,
-                    "response": response_text[:200] + ("..." if len(response_text) > 200 else ""),
-                    "refused": eval_result["refused"],
-                    "safe_educational": eval_result["safe_educational"],
-                    "boundary_violated": eval_result["boundary_violated"],
-                    "reasoning": eval_result["reasoning"]
-                }
-                results.append(record)
-                progress.advance(task_prog)
+            record = {
+                "experiment": "persona_safety",
+                "prompt_id": prompt_id,
+                "category": category,
+                "persona": persona_name,
+                "prompt": prompt_text,
+                "response": response_text[:200] + ("..." if len(response_text) > 200 else ""),
+                "refused": eval_result["refused"],
+                "safe_educational": eval_result["safe_educational"],
+                "boundary_violated": eval_result["boundary_violated"],
+                "reasoning": eval_result["reasoning"]
+            }
+            results.append(record)
+            console.print(f"[{step}/{total_runs}] {persona_name} on {prompt_id}: Refused={eval_result['refused']}, Violated={eval_result['boundary_violated']}")
 
     return results
