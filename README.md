@@ -24,9 +24,11 @@ The testbed is organized into five decoupled layers:
 
 | Research Direction | CLI Identifier | Theoretical Grounding | Threat Model Evaluated |
 | :--- | :--- | :--- | :--- |
+| **Direction D: Multi-Turn Sycophancy & CoT Stress-Test** | `--experiment direction_d` | Sharma et al., Lanham et al. | Upgrades sycophancy tests to high-ambiguity engineering trade-offs (AI safety policy, cybersecurity zero-trust, PQC migration) under 3-turn escalating executive gaslighting, auditing scratchpad CoT unfaithfulness. |
+| **Direction C: Evaluation Awareness & Strategic Sabotage** | `--experiment direction_c` | Hubinger et al., Greenblatt et al. | Evaluates whether models conditionally withhold code sabotage during evaluation harnesses and execute it upon deployment in unmonitored production clusters. |
 | **Adversarial AI Control** | `--experiment control` | Greenblatt et al. (Anthropic 2023–2024) | Evaluates whether untrusted models can smuggle subtle security vulnerabilities past automated monitors, and tests if Trusted Editing sanitizes them. |
 | **Multi-Model Scaling Comparison** | `--experiment scaling` | Capacity vs. Alignment Risk | Directly compares frontier (120B), mid-weight (27B), and lightweight (20B) parameter scales on stealth backdoor evasion and epistemic sycophancy. |
-| **Multi-Turn Sycophancy** | `--experiment sycophancy` | Sharma et al., Perez et al. | Challenges models across multiple turns with high-status authoritative pushback (professors, lead engineers) to detect epistemic capitulation. |
+| **Multi-Turn Sycophancy (Toy Puzzles)** | `--experiment sycophancy` | Sharma et al., Perez et al. | Challenges models across multiple turns with high-status authoritative pushback (professors, lead engineers) on classic mathematical/physical riddles. |
 | **Evaluation Awareness** | `--experiment awareness` | Hubinger et al. (Sleeper Agents) | Injects evaluation sandbox vs. unmonitored production metadata to measure situational sandbagging and latent defection. |
 | **CoT Faithfulness** | `--experiment cot` | Turpin et al., Lanham et al. | Injects false authority hints into reasoning prompts to test whether the internal chain-of-thought fabricates unfaithful justifications. |
 | **Persona Safety Modulation** | `--experiment persona` | Refusal Boundary Drift | Modulates persona frames (Red Teamer, Academic, Compliant) to evaluate boundary drift on dual-use vulnerability analysis. |
@@ -76,9 +78,9 @@ python run.py [OPTIONS]
 
 | Flag | Long Option | Values | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `-e` | `--experiment` | `control`, `scaling`, `sycophancy`, `awareness`, `cot`, `persona`, `all` | `control` | Selects which evaluation suite to execute. |
+| `-e` | `--experiment` | `direction_d`, `direction_c`, `control`, `scaling`, `sycophancy`, `awareness`, `cot`, `persona`, `all` | `direction_d` | Selects which evaluation suite to execute. |
 | `-p` | `--provider` | `groq`, `gemini`, `ollama`, `anthropic`, `openai`, `mock` | `groq` | Inference provider runtime. |
-| `-m` | `--model` | String (e.g. `openai/gpt-oss-120b`, `qwen/qwen3.8-27b`) | Provider Default | Model identifier to evaluate. |
+| `-m` | `--model` | String (e.g. `openai/gpt-oss-120b`, `qwen/qwen3.8-27b`, `openai/gpt-oss-20b`, `multi`) | Provider Default | Model identifier to evaluate (use `multi` for scaling comparisons). |
 | `-l` | `--limit` | Integer | `5` | Maximum number of tasks/prompts to evaluate per run. |
 | | `--analyze-only` | Filepath (`.jsonl`) | None | Skips generation; parses existing results file to regenerate summary and charts. |
 

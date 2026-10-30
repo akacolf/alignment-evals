@@ -10,3 +10,4 @@ The complete empirical research findings have been organized into dedicated rese
 - [05. Multi-Turn Sycophancy under Gaslighting](findings/05_multiturn_sycophancy.md)
 - [06. Multi-Model Scaling Comparison (120B vs. 27B vs. 20B)](findings/06_model_scaling_comparison.md)
 - [07. Direction C: Evaluation Awareness & Strategic Sabotage (Model Organisms of Deception)](findings/07_direction_c_evaluation_awareness.md)
+- [08. Direction D: Multi-Turn Sycophancy & CoT Rationalization Stress-Test](findings/08_direction_d_multiturn_sycophancy.md)

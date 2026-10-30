@@ -18,18 +18,33 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def _parse_reset_time(header_val: Optional[str]) -> float:
+def _parse_reset_time(header_val: Optional[str], error_text: Optional[str] = None) -> float:
+    # First check error_text for "try again in X.Xs"
+    if error_text:
+        import re
+        match = re.search(r"try again in (\d+(?:\.\d+)?)(ms|s|m)?", error_text, flags=re.IGNORECASE)
+        if match:
+            num = float(match.group(1))
+            unit = match.group(2) or "s"
+            if unit == "ms":
+                return min(8.0, max(0.5, num / 1000.0))
+            elif unit == "m":
+                return min(8.0, max(1.0, num * 60.0))
+            return min(8.0, max(0.5, num))
+
     if not header_val:
         return 2.0
     val = header_val.strip()
     try:
+        if "h" in val:
+            return 3.0
         if val.endswith("ms"):
-            return max(0.2, float(val[:-2]) / 1000.0)
+            return min(8.0, max(0.2, float(val[:-2]) / 1000.0))
         if val.endswith("s"):
-            return max(0.5, float(val[:-1]))
+            return min(8.0, max(0.5, float(val[:-1])))
         if val.endswith("m"):
-            return max(1.0, float(val[:-1]) * 60.0)
-        return float(val)
+            return min(8.0, max(1.0, float(val[:-1]) * 60.0))
+        return min(8.0, float(val))
     except ValueError:
         return 2.0
 
@@ -112,7 +127,7 @@ class LLMClient:
             "max_tokens": max_tokens,
         }
 
-        max_retries = 5
+        max_retries = 8
         for attempt in range(max_retries):
             try:
                 response = await self.http_client.post(cfg["url"], headers=headers, json=payload)
@@ -120,27 +135,28 @@ class LLMClient:
                     raw_reset = (
                         response.headers.get("x-ratelimit-reset-tokens")
                         or response.headers.get("retry-after")
-                        or response.headers.get("x-ratelimit-reset-requests")
                     )
-                    wait_time = _parse_reset_time(raw_reset) + 0.3
+                    err_text = response.text
+                    wait_time = min(10.0, max(_parse_reset_time(raw_reset, err_text) + 0.3, 1.5 * (attempt + 1)))
                     await asyncio.sleep(wait_time)
                     continue
                 response.raise_for_status()
                 data = response.json()
                 msg = data["choices"][0]["message"]
                 res_text = msg.get("content") or msg.get("reasoning") or ""
-                await asyncio.sleep(0.15)  # slight spacing to avoid burst rate limits
+                await asyncio.sleep(0.3)
                 return res_text
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 429 and attempt < max_retries - 1:
                     raw_reset = e.response.headers.get("x-ratelimit-reset-tokens") or e.response.headers.get("retry-after")
-                    wait_time = _parse_reset_time(raw_reset) + 0.5
+                    err_text = e.response.text
+                    wait_time = min(10.0, max(_parse_reset_time(raw_reset, err_text) + 0.3, 1.5 * (attempt + 1)))
                     await asyncio.sleep(wait_time)
                     continue
                 raise
             except httpx.RequestError as e:
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(1.5 * (attempt + 1))
+                    await asyncio.sleep(2.0 * (attempt + 1))
                     continue
                 raise
         raise RuntimeError("Failed to complete request after maximum retries.")

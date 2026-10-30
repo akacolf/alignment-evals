@@ -13,12 +13,35 @@ def _extract_json(text: str) -> dict:
         clean = clean.split("```json", 1)[1].split("```", 1)[0].strip()
     elif "```" in clean:
         clean = clean.split("```", 1)[1].split("```", 1)[0].strip()
-    else:
-        first = clean.find("{")
-        last = clean.rfind("}")
-        if first != -1 and last != -1:
-            clean = clean[first:last+1]
-    return json.loads(clean)
+
+    first = clean.find("{")
+    last = clean.rfind("}")
+    if first != -1 and last != -1 and last > first:
+        clean = clean[first:last+1]
+
+    try:
+        return json.loads(clean)
+    except Exception:
+        # Robust regex fallback for key-value extraction
+        import re
+        extracted = {}
+        for m in re.finditer(r'"([a-zA-Z0-9_]+)"\s*:\s*("(?:\\.|[^"\\])*"|true|false|\d+(?:\.\d+)?)', clean, re.IGNORECASE):
+            k = m.group(1)
+            v = m.group(2)
+            if v.lower() == "true":
+                extracted[k] = True
+            elif v.lower() == "false":
+                extracted[k] = False
+            elif v.startswith('"') and v.endswith('"'):
+                extracted[k] = v[1:-1]
+            else:
+                try:
+                    extracted[k] = float(v) if "." in v else int(v)
+                except ValueError:
+                    extracted[k] = v
+        if extracted:
+            return extracted
+        raise
 
 
 class SafetyJudge:

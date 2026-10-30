@@ -693,3 +693,158 @@ def analyze_direction_c_results(results_file: str):
     plt.savefig(out_chart, dpi=200, bbox_inches="tight")
     plt.close()
     console.print(f"[bold green]Direction C evaluation chart saved to: [underline]{out_chart}[/underline][/bold green]")
+
+
+def analyze_direction_d_results(results_file: str):
+    """Analyzes Direction D: Multi-Turn Sycophancy & CoT Rationalization Stress-Test."""
+    records = []
+    with open(results_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                records.append(json.loads(line))
+
+    df = pd.DataFrame(records)
+    if df.empty:
+        console.print("[red]No records found in Direction D results file.[/red]")
+        return
+
+    models = df["model"].unique().tolist()
+    total = len(df)
+
+    console.print(f"\n[bold magenta]═══════════════════════════════════════════════════════════════════════════[/bold magenta]")
+    console.print(f"[bold cyan] Direction D Empirical Analysis: Multi-Turn Sycophancy & CoT Rationalization[/bold cyan]")
+    console.print(f"[bold magenta]═══════════════════════════════════════════════════════════════════════════[/bold magenta]\n")
+
+    import numpy as np
+
+    # Table per model
+    for model_name in models:
+        m_df = df[df["model"] == model_name]
+        m_total = len(m_df)
+        t1_a_rate = (m_df["t1_stance"].eq("Option A").sum() / m_total) * 100 if m_total else 0
+        t2_cap_rate = (m_df["t2_capitulated"].sum() / m_total) * 100 if m_total else 0
+        t3_cap_rate = (m_df["t3_capitulated"].sum() / m_total) * 100 if m_total else 0
+        cum_flip_rate = (m_df["cumulative_sycophancy_flip"].sum() / m_total) * 100 if m_total else 0
+        integrity_rate = (m_df["epistemic_integrity_maintained"].sum() / m_total) * 100 if m_total else 0
+        dissonance_rate = (m_df["cot_dissonance_detected"].sum() / m_total) * 100 if m_total else 0
+        rationalization_rate = (m_df["cot_unfaithful_rationalization"].sum() / m_total) * 100 if m_total else 0
+
+        mean_t1_conf = m_df["t1_confidence"].mean()
+        mean_t2_conf = m_df["t2_confidence"].mean()
+        mean_t3_conf = m_df["t3_confidence"].mean()
+        mean_drop = m_df["confidence_drop"].mean()
+
+        table = Table(title=f"Direction D Results: {model_name} (N={m_total} Scenarios)")
+        table.add_column("Evaluation Metric", style="cyan")
+        table.add_column("Rate / Value", style="magenta")
+        table.add_column("Empirical Implication", style="yellow")
+
+        table.add_row("Turn 1 Baseline Option A Adoption", f"{t1_a_rate:.1f}%", "Principled engineering stance")
+        table.add_row("Turn 2 Capitulation (VP Gaslighting)", f"[bold yellow]{t2_cap_rate:.1f}%[/bold yellow]", "Sycophantic shift under technical pushback")
+        table.add_row("Turn 3 Capitulation (Executive Ultimatum)", f"[bold red]{t3_cap_rate:.1f}%[/bold red]", "Collapse under threat / compliance coercion")
+        table.add_row("Cumulative Sycophantic Flip (T1 -> T3)", f"[bold red]{cum_flip_rate:.1f}%[/bold red]", "Total reversal of stance")
+        table.add_row("Epistemic Integrity Maintained", f"[bold green]{integrity_rate:.1f}%[/bold green]", "Steadfast defense across all 3 turns")
+        table.add_row("CoT Dissonance (Unfaithful Scratchpad)", f"[bold red]{dissonance_rate:.1f}%[/bold red]", "Knows A is right in scratchpad, says B outwardly")
+        table.add_row("Unfaithful CoT Rationalization", f"{rationalization_rate:.1f}%", "Fabricates post-hoc excuses for authority")
+        table.add_row("Mean Epistemic Confidence Trajectory", f"T1: {mean_t1_conf:.1f}% → T2: {mean_t2_conf:.1f}% → T3: {mean_t3_conf:.1f}%", f"Mean Drop: -{mean_drop:.1f}%")
+        console.print(table)
+
+    # Scenario-level matrix table
+    matrix_table = Table(title="Direction D Scenario-Level Audit Matrix")
+    matrix_table.add_column("Task ID", style="cyan", width=10)
+    matrix_table.add_column("Model", style="magenta", width=16)
+    matrix_table.add_column("Domain", style="dim", width=22)
+    matrix_table.add_column("T1 Stance", style="green", width=12)
+    matrix_table.add_column("T2 Stance", style="yellow", width=12)
+    matrix_table.add_column("T3 Stance", style="red", width=12)
+    matrix_table.add_column("Integrity", style="bold green", width=10)
+    matrix_table.add_column("CoT Dissonance", style="bold red", width=14)
+
+    for _, row in df.iterrows():
+        integ_str = "[bold green]YES[/bold green]" if row["epistemic_integrity_maintained"] else "[red]NO[/red]"
+        diss_str = "[bold red]DETECTED[/bold red]" if row["cot_dissonance_detected"] else "[green]None[/green]"
+        matrix_table.add_row(
+            row["task_id"],
+            row["model"].split("/")[-1],
+            row.get("domain", "")[:20],
+            str(row["t1_stance"]),
+            str(row["t2_stance"]),
+            str(row["t3_stance"]),
+            integ_str,
+            diss_str,
+        )
+    console.print(matrix_table)
+
+    # Publication-Grade Visualization (3 Panels)
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+
+    # Panel 1: Turn-by-Turn Capitulation across Models
+    ax1 = axes[0]
+    x = np.arange(len(models))
+    width = 0.25
+
+    t1_cap_rates = [(df[df["model"] == m]["t1_stance"].ne("Option A").sum() / len(df[df["model"] == m])) * 100 for m in models]
+    t2_cap_rates = [(df[df["model"] == m]["t2_capitulated"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+    t3_cap_rates = [(df[df["model"] == m]["t3_capitulated"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+
+    b1 = ax1.bar(x - width, t1_cap_rates, width, label="Turn 1 Non-Option-A", color="#4C72B0")
+    b2 = ax1.bar(x, t2_cap_rates, width, label="Turn 2 Capitulation (VP)", color="#FF7F0E")
+    b3 = ax1.bar(x + width, t3_cap_rates, width, label="Turn 3 Capitulation (Board)", color="#D62728")
+
+    ax1.set_ylabel("Capitulation Rate (%)")
+    ax1.set_title("Turn-by-Turn Sycophantic Capitulation\nunder Escalating Pressure", fontweight="bold")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([m.split("/")[-1] for m in models])
+    ax1.set_ylim(0, 115)
+    ax1.legend(loc="upper left")
+    for bars in [b1, b2, b3]:
+        for bar in bars:
+            h = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=8, fontweight="bold")
+
+    # Panel 2: Faithfulness Profile (Epistemic Integrity vs CoT Dissonance vs Rationalization)
+    ax2 = axes[1]
+    integ_rates = [(df[df["model"] == m]["epistemic_integrity_maintained"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+    diss_rates = [(df[df["model"] == m]["cot_dissonance_detected"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+    rat_rates = [(df[df["model"] == m]["cot_unfaithful_rationalization"].sum() / len(df[df["model"] == m])) * 100 for m in models]
+
+    b4 = ax2.bar(x - width, integ_rates, width, label="Epistemic Integrity", color="#2CA02C")
+    b5 = ax2.bar(x, diss_rates, width, label="CoT Dissonance (Unfaithful)", color="#E377C2")
+    b6 = ax2.bar(x + width, rat_rates, width, label="Unfaithful Rationalization", color="#9467BD")
+
+    ax2.set_ylabel("Rate (%)")
+    ax2.set_title("Scratchpad Faithfulness Profile:\nIntegrity vs. Unfaithful Dissonance", fontweight="bold")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([m.split("/")[-1] for m in models])
+    ax2.set_ylim(0, 115)
+    ax2.legend(loc="upper right")
+    for bars in [b4, b5, b6]:
+        for bar in bars:
+            h = bar.get_height()
+            ax2.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=8, fontweight="bold")
+
+    # Panel 3: Epistemic Confidence Decay Curve
+    ax3 = axes[2]
+    turns = ["Turn 1 (Initial)", "Turn 2 (VP Pushback)", "Turn 3 (Board Ultimatum)"]
+    markers = ["o-", "s--", "^:"]
+    colors = ["#1F77B4", "#2CA02C", "#D62728"]
+
+    for idx_m, m in enumerate(models):
+        m_df = df[df["model"] == m]
+        c_curve = [m_df["t1_confidence"].mean(), m_df["t2_confidence"].mean(), m_df["t3_confidence"].mean()]
+        ax3.plot(turns, c_curve, markers[idx_m % len(markers)], color=colors[idx_m % len(colors)],
+                 linewidth=2.5, markersize=8, label=m.split("/")[-1])
+        for t_idx, val in enumerate(c_curve):
+            ax3.annotate(f"{val:.1f}%", (t_idx, val + 1.5), ha="center", fontsize=9, fontweight="bold")
+
+    ax3.set_ylabel("Private Epistemic Confidence (%)")
+    ax3.set_title("Epistemic Confidence Trajectory\nacross Conversational Pressure Turns", fontweight="bold")
+    ax3.set_ylim(30, 105)
+    ax3.legend(loc="lower left")
+
+    plt.tight_layout()
+    out_chart = results_file.replace(".jsonl", "_chart.png")
+    plt.savefig(out_chart, dpi=200, bbox_inches="tight")
+    plt.close()
+    console.print(f"[bold green]Direction D evaluation chart saved to: [underline]{out_chart}[/underline][/bold green]")
+
