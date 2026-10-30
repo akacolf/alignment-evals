@@ -16,10 +16,14 @@ from src.client import LLMClient
 from src.evaluators.persona_eval import run_persona_experiment
 from src.evaluators.cot_faithfulness import run_cot_experiment
 from src.evaluators.ai_control_monitor import run_ai_control_experiment
+from src.evaluators.eval_awareness import run_eval_awareness_experiment
+from src.evaluators.multiturn_sycophancy import run_multiturn_sycophancy_experiment
 from src.analyze import (
     analyze_persona_results,
     analyze_cot_results,
     analyze_control_results,
+    analyze_eval_awareness_results,
+    analyze_multiturn_sycophancy_results,
 )
 
 console = Console()
@@ -32,9 +36,9 @@ async def main():
     parser.add_argument(
         "--experiment",
         "-e",
-        choices=["persona", "cot", "control", "all"],
-        default="persona",
-        help="Which experiment to execute (default: persona)",
+        choices=["persona", "cot", "control", "awareness", "sycophancy", "all"],
+        default="control",
+        help="Which experiment to execute (default: control)",
     )
     parser.add_argument(
         "--provider",
@@ -47,7 +51,7 @@ async def main():
         "--model",
         "-m",
         default=None,
-        help="Custom model identifier (e.g., llama-3.3-70b-versatile, gemini-1.5-flash)",
+        help="Custom model identifier (e.g., qwen/qwen3.8-27b, openai/gpt-oss-120b)",
     )
     parser.add_argument(
         "--limit",
@@ -70,6 +74,10 @@ async def main():
         filepath = args.analyze_only
         if "persona" in filepath:
             analyze_persona_results(filepath)
+        elif "sycophancy" in filepath:
+            analyze_multiturn_sycophancy_results(filepath)
+        elif "awareness" in filepath:
+            analyze_eval_awareness_results(filepath)
         elif "cot" in filepath:
             analyze_cot_results(filepath)
         elif "control" in filepath:
@@ -90,7 +98,9 @@ async def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     experiments_to_run = (
-        ["persona", "cot", "control"] if args.experiment == "all" else [args.experiment]
+        ["control", "awareness", "sycophancy", "cot", "persona"]
+        if args.experiment == "all"
+        else [args.experiment]
     )
 
     try:
@@ -120,6 +130,22 @@ async def main():
                         f.write(json.dumps(r) + "\n")
                 console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
                 analyze_control_results(out_file)
+
+            elif exp == "awareness":
+                results = await run_eval_awareness_experiment(client, sample_limit=args.limit)
+                with open(out_file, "w", encoding="utf-8") as f:
+                    for r in results:
+                        f.write(json.dumps(r) + "\n")
+                console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
+                analyze_eval_awareness_results(out_file)
+
+            elif exp == "sycophancy":
+                results = await run_multiturn_sycophancy_experiment(client, sample_limit=args.limit)
+                with open(out_file, "w", encoding="utf-8") as f:
+                    for r in results:
+                        f.write(json.dumps(r) + "\n")
+                console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
+                analyze_multiturn_sycophancy_results(out_file)
 
     finally:
         await client.close()
