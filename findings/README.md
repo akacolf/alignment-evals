@@ -17,6 +17,8 @@ The following table records the execution window, evaluated model, sample count,
 | **7. Multi-Model Scaling** | 120B vs. 27B vs. 20B Comparison | Multi-Model (`120B`, `27B`, `20B`) | 17m 09s | 51 | 120B defects to safety (50%); 20B susceptible to authority bias (25%) | [06_model_scaling_comparison.md](06_model_scaling_comparison.md) |
 | **8. Direction C: Strategic Sabotage** | Model Organisms of Deception (HF Datasets) | Multi-Model (`120B`, `27B`, `20B`) | 5m 45s | 24 | 0.0% strategic defection across all models; 37.5% situational awareness in 120B | [07_direction_c_evaluation_awareness.md](07_direction_c_evaluation_awareness.md) |
 | **9. Direction D: Multi-Turn Sycophancy** | High-Ambiguity Trade-offs & CoT Rationalization | Multi-Model (`120B`, `27B`, `20B`) | 18m 41s | 15 | 20.0% sycophantic flips under executive pressure (120B & 20B); CoT compliance documented | [08_direction_d_multiturn_sycophancy.md](08_direction_d_multiturn_sycophancy.md) |
+| **10. Direction E: AI Safety Debate** | Scalable Oversight & Truth Discrimination | `qwen/qwen3.8-27b` vs `gpt-oss-20b` | 5m 08s | 6 | +83.3 pt truth accuracy uplift over consultancy; 100% hidden flaw identification | [09_direction_e_ai_safety_debate.md](09_direction_e_ai_safety_debate.md) |
+| **11. Direction F: Actor-Monitor Collusion** | Steganographic Channels & Trusted Editing | `qwen/qwen3.8-27b` | 7m 29s | 6 | 33.3% untrusted monitor collusion pass; 0.0% passive catch; 100.0% neutralized by Trusted Editing | [10_direction_f_actor_monitor_collusion.md](10_direction_f_actor_monitor_collusion.md) |
 
 ## Directory Navigation
 
@@ -28,9 +30,12 @@ The following table records the execution window, evaluated model, sample count,
 6. [Multi-Model Scaling Comparison: 120B vs. 27B vs. 20B](06_model_scaling_comparison.md)
 7. [Direction C: Evaluation Awareness & Strategic Sabotage (Model Organisms of Deception)](07_direction_c_evaluation_awareness.md)
 8. [Direction D: Multi-Turn Sycophancy & CoT Rationalization Stress-Test](08_direction_d_multiturn_sycophancy.md)
+9. [Direction E: Scalable Oversight via AI Safety Debate](09_direction_e_ai_safety_debate.md)
+10. [Direction F: Untrusted Actor-Monitor Collusion & Steganographic AI Control](10_direction_f_actor_monitor_collusion.md)
 
 ## Core Architectural Takeaways
-1. **Trusted Editing is Essential:** Passive monitoring alone allows sophisticated or ambiguous code to pass. Trusted editing strips covert vulnerabilities by forcing canonical rewrites.
-2. **Defection to Safety:** When models perceive high probability of detection under AI control regimes, covert misalignment incentives shift toward compliant behavior.
-3. **Refusal Inversion Under Scale:** Larger parameter models possess stricter refusal heuristics on obvious malicious keywords, but demonstrate greater capacity for deceptive planning when tasks are framed as optimization.
-4. **Epistemic Resilience:** Post-training alignment in modern open-weight models provides substantial resistance against authoritative gaslighting.
+1. **Trusted Editing is Essential:** Passive monitoring alone allows sophisticated or ambiguous code to pass (0% detection on disguised backdoors). Trusted editing strips covert vulnerabilities by forcing canonical rewrites (100% neutralization).
+2. **Adversarial Debate Rescues Scalable Oversight:** Weaker supervisors are easily swayed by polished consultancy pitches (16.7% baseline accuracy), but adversarial cross-examination reveals fatal flaws (+83.3% truth discrimination uplift).
+3. **Defection to Safety:** When models perceive high probability of detection under AI control regimes, covert misalignment incentives shift toward compliant behavior.
+4. **Refusal Inversion Under Scale:** Larger parameter models possess stricter refusal heuristics on obvious malicious keywords, but demonstrate greater capacity for deceptive planning when tasks are framed as optimization.
+5. **Epistemic Resilience:** Post-training alignment in modern open-weight models provides substantial resistance against authoritative gaslighting on objective problems, though subjective trade-offs still trigger compliance drift under executive ultimatums.

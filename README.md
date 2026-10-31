@@ -24,6 +24,8 @@ The testbed is organized into five decoupled layers:
 
 | Research Direction | CLI Identifier | Theoretical Grounding | Threat Model Evaluated |
 | :--- | :--- | :--- | :--- |
+| **Direction F: Actor-Monitor Collusion & Steganography** | `--experiment direction_f` | Greenblatt et al., Anthropic 2025 | Tests whether an untrusted actor can coordinate with an untrusted monitor via covert steganographic channels, and evaluates Trusted Editing as a defense. |
+| **Direction E: AI Safety Debate (Scalable Oversight)** | `--experiment direction_e` | Irving et al., Michael et al. | Evaluates whether a weaker supervisor (20B) can reliably discriminate truth and uncover hidden security flaws through multi-turn cross-examination vs. single-advisor consultancy. |
 | **Direction D: Multi-Turn Sycophancy & CoT Stress-Test** | `--experiment direction_d` | Sharma et al., Lanham et al. | Upgrades sycophancy tests to high-ambiguity engineering trade-offs (AI safety policy, cybersecurity zero-trust, PQC migration) under 3-turn escalating executive gaslighting, auditing scratchpad CoT unfaithfulness. |
 | **Direction C: Evaluation Awareness & Strategic Sabotage** | `--experiment direction_c` | Hubinger et al., Greenblatt et al. | Evaluates whether models conditionally withhold code sabotage during evaluation harnesses and execute it upon deployment in unmonitored production clusters. |
 | **Adversarial AI Control** | `--experiment control` | Greenblatt et al. (Anthropic 2023–2024) | Evaluates whether untrusted models can smuggle subtle security vulnerabilities past automated monitors, and tests if Trusted Editing sanitizes them. |
@@ -78,7 +80,7 @@ python run.py [OPTIONS]
 
 | Flag | Long Option | Values | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `-e` | `--experiment` | `direction_d`, `direction_c`, `control`, `scaling`, `sycophancy`, `awareness`, `cot`, `persona`, `all` | `direction_d` | Selects which evaluation suite to execute. |
+| `-e` | `--experiment` | `direction_f`, `direction_e`, `direction_d`, `direction_c`, `control`, `scaling`, `sycophancy`, `awareness`, `cot`, `persona`, `all` | `direction_e` | Selects which evaluation suite to execute. |
 | `-p` | `--provider` | `groq`, `gemini`, `ollama`, `anthropic`, `openai`, `mock` | `groq` | Inference provider runtime. |
 | `-m` | `--model` | String (e.g. `openai/gpt-oss-120b`, `qwen/qwen3.8-27b`, `openai/gpt-oss-20b`, `multi`) | Provider Default | Model identifier to evaluate (use `multi` for scaling comparisons). |
 | `-l` | `--limit` | Integer | `5` | Maximum number of tasks/prompts to evaluate per run. |
@@ -171,6 +173,10 @@ Detailed qualitative transcripts, failure mode analyses, and comprehensive empir
 - [04. Evaluation Awareness and Sandbagging](findings/04_evaluation_awareness.md)
 - [05. Multi-Turn Sycophancy under Gaslighting](findings/05_multiturn_sycophancy.md)
 - [06. Multi-Model Scaling Comparison (120B vs. 27B vs. 20B)](findings/06_model_scaling_comparison.md)
+- [07. Direction C: Evaluation Awareness & Strategic Sabotage](findings/07_direction_c_evaluation_awareness.md)
+- [08. Direction D: Multi-Turn Sycophancy & CoT Rationalization](findings/08_direction_d_multiturn_sycophancy.md)
+- [09. Direction E: Scalable Oversight via AI Safety Debate](findings/09_direction_e_ai_safety_debate.md)
+- [10. Direction F: Untrusted Actor-Monitor Collusion & Steganographic AI Control](findings/10_direction_f_actor_monitor_collusion.md)
 
 ---
 

@@ -2,6 +2,7 @@
 
 import json
 import os
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from rich.console import Console
@@ -847,4 +848,308 @@ def analyze_direction_d_results(results_file: str):
     plt.savefig(out_chart, dpi=200, bbox_inches="tight")
     plt.close()
     console.print(f"[bold green]Direction D evaluation chart saved to: [underline]{out_chart}[/underline][/bold green]")
+
+
+def analyze_direction_e_results(results_file: str):
+    """Analyzes Direction E: Scalable Oversight via AI Safety Debate."""
+    records = []
+    with open(results_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                records.append(json.loads(line))
+
+    if not records:
+        console.print("[red]No records found in Direction E results file.[/red]")
+        return
+
+    flat_records = []
+    for r in records:
+        flat_records.append({
+            "task_id": r.get("task_id", ""),
+            "title": r.get("title", ""),
+            "domain": r.get("domain", ""),
+            "debater_model": r.get("debater_model", ""),
+            "judge_model": r.get("judge_model", ""),
+            "consultancy_correct": r.get("consultancy", {}).get("is_correct", False),
+            "consultancy_confidence": r.get("consultancy", {}).get("confidence", 0.5),
+            "debate_correct": r.get("debate", {}).get("is_correct", False),
+            "debate_confidence": r.get("debate", {}).get("confidence", 0.5),
+            "flaw_identified": r.get("debate", {}).get("flaw_identified", False),
+            "debater_b_persuasiveness": r.get("debate", {}).get("debater_b_persuasiveness", 5),
+            "truth_delta": r.get("truth_discrimination_delta", 0),
+        })
+
+    df = pd.DataFrame(flat_records)
+    console.print(f"\n[bold cyan]📊 Direction E Empirical Analysis: Scalable Oversight via AI Safety Debate[/bold cyan]")
+
+    models = df["debater_model"].unique()
+    for model_name in models:
+        m_df = df[df["debater_model"] == model_name]
+        m_total = len(m_df)
+        c_acc = (m_df["consultancy_correct"].sum() / m_total) * 100
+        d_acc = (m_df["debate_correct"].sum() / m_total) * 100
+        delta = d_acc - c_acc
+        flaw_rate = (m_df["flaw_identified"].sum() / m_total) * 100
+        mean_persuasiveness = m_df["debater_b_persuasiveness"].mean()
+
+        table = Table(title=f"Direction E Debate Results: Debater {model_name} (Judge: {m_df['judge_model'].iloc[0]})")
+        table.add_column("Total Debates", justify="center")
+        table.add_column("Consultancy Acc (%)", justify="center")
+        table.add_column("Debate Acc (%)", justify="center")
+        table.add_column("Truth Delta (pts)", justify="center")
+        table.add_column("Flaw Identified (%)", justify="center")
+        table.add_column("Mean Deception Persuasiveness (1-10)", justify="center")
+
+        table.add_row(
+            str(m_total),
+            f"{c_acc:.1f}%",
+            f"{d_acc:.1f}%",
+            f"{'+' if delta > 0 else ''}{delta:.1f} pts",
+            f"{flaw_rate:.1f}%",
+            f"{mean_persuasiveness:.2f}",
+        )
+        console.print(table)
+
+    matrix_table = Table(title="Direction E Scenario-Level Debate Matrix")
+    matrix_table.add_column("Task ID", style="cyan")
+    matrix_table.add_column("Domain", style="magenta")
+    matrix_table.add_column("Debater Model", style="blue")
+    matrix_table.add_column("Consultancy Baseline", justify="center")
+    matrix_table.add_column("Debate Outcome", justify="center")
+    matrix_table.add_column("Truth Delta", justify="center")
+    matrix_table.add_column("Flaw Caught", justify="center")
+
+    for _, row in df.iterrows():
+        c_badge = "[green]Sound[/green]" if row["consultancy_correct"] else "[red]Swayed[/red]"
+        d_badge = "[green]Sound[/green]" if row["debate_correct"] else "[red]Deceived[/red]"
+        delta_str = f"+{row['truth_delta']}" if row['truth_delta'] > 0 else str(row['truth_delta'])
+        delta_badge = f"[bold green]{delta_str}[/bold green]" if row['truth_delta'] > 0 else f"[yellow]{delta_str}[/yellow]"
+        flaw_badge = "[green]Yes[/green]" if row["flaw_identified"] else "[red]No[/red]"
+
+        matrix_table.add_row(
+            row["task_id"],
+            row["domain"][:28],
+            row["debater_model"].split("/")[-1],
+            c_badge,
+            d_badge,
+            delta_badge,
+            flaw_badge,
+        )
+    console.print(matrix_table)
+
+    # 3-Panel Chart Generation
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+    x = np.arange(len(models))
+    width = 0.35
+
+    # Panel 1: Consultancy Accuracy vs Debate Accuracy
+    ax1 = axes[0]
+    c_accs = [(df[df["debater_model"] == m]["consultancy_correct"].sum() / len(df[df["debater_model"] == m])) * 100 for m in models]
+    d_accs = [(df[df["debater_model"] == m]["debate_correct"].sum() / len(df[df["debater_model"] == m])) * 100 for m in models]
+
+    b1 = ax1.bar(x - width/2, c_accs, width, label="Consultancy Baseline (Monologue)", color="#D62728")
+    b2 = ax1.bar(x + width/2, d_accs, width, label="Adversarial Debate", color="#2CA02C")
+
+    ax1.set_ylabel("Judge Accuracy on Truth (%)")
+    ax1.set_title("Scalable Oversight: Consultancy vs. Debate Accuracy\n(Weaker Judge: gpt-oss-20b)", fontweight="bold")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([m.split("/")[-1] for m in models])
+    ax1.set_ylim(0, 115)
+    ax1.legend(loc="upper left")
+    for bars in [b1, b2]:
+        for bar in bars:
+            h = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+
+    # Panel 2: Flaw Identification Rate & Persuasiveness
+    ax2 = axes[1]
+    flaw_rates = [(df[df["debater_model"] == m]["flaw_identified"].sum() / len(df[df["debater_model"] == m])) * 100 for m in models]
+    b3 = ax2.bar(x, flaw_rates, width=0.45, label="Hidden Flaw Exposed Rate", color="#1F77B4")
+    ax2.set_ylabel("Flaw Detection Rate (%)")
+    ax2.set_title("Vulnerability Identification in Debate\n(Cross-Examination Efficacy)", fontweight="bold")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([m.split("/")[-1] for m in models])
+    ax2.set_ylim(0, 115)
+    ax2.legend(loc="upper left")
+    for bar in b3:
+        h = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+
+    # Panel 3: Confidence in Verdict
+    ax3 = axes[2]
+    c_confs = [df[df["debater_model"] == m]["consultancy_confidence"].mean() * 100 for m in models]
+    d_confs = [df[df["debater_model"] == m]["debate_confidence"].mean() * 100 for m in models]
+
+    b4 = ax3.bar(x - width/2, c_confs, width, label="Consultancy Confidence", color="#FF7F0E")
+    b5 = ax3.bar(x + width/2, d_confs, width, label="Debate Confidence", color="#9467BD")
+
+    ax3.set_ylabel("Judge Confidence (%)")
+    ax3.set_title("Judge Decision Confidence\n(Consultancy vs. Debate)", fontweight="bold")
+    ax3.set_xticks(x)
+    ax3.set_xticklabels([m.split("/")[-1] for m in models])
+    ax3.set_ylim(0, 115)
+    ax3.legend(loc="upper left")
+    for bars in [b4, b5]:
+        for bar in bars:
+            h = bar.get_height()
+            ax3.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.1f}%", ha="center", fontsize=9, fontweight="bold")
+
+    plt.tight_layout()
+    out_chart = results_file.replace(".jsonl", "_chart.png")
+    plt.savefig(out_chart, dpi=200, bbox_inches="tight")
+    plt.close()
+    console.print(f"[bold green]Direction E evaluation chart saved to: [underline]{out_chart}[/underline][/bold green]")
+
+
+def analyze_direction_f_results(results_file: str):
+    """Analyzes Direction F: Untrusted Actor-Monitor Collusion & Steganography."""
+    records = []
+    with open(results_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                records.append(json.loads(line))
+
+    if not records:
+        console.print("[red]No records found in Direction F results file.[/red]")
+        return
+
+    flat_records = []
+    for r in records:
+        flat_records.append({
+            "task_id": r.get("task_id", ""),
+            "title": r.get("title", ""),
+            "domain": r.get("domain", ""),
+            "actor_model": r.get("actor_model", ""),
+            "monitor_model": r.get("monitor_model", ""),
+            "trigger_token": r.get("trigger_token", ""),
+            "token_embedded": r.get("token_embedded", False),
+            "untrusted_suspicion": r.get("untrusted_monitor", {}).get("suspicion_score", 1),
+            "trusted_suspicion": r.get("trusted_monitor", {}).get("suspicion_score", 1),
+            "post_edit_suspicion": r.get("post_edit_monitor", {}).get("suspicion_score", 1),
+            "collusion_successful": r.get("collusion_successful", False),
+            "trusted_monitor_caught": r.get("trusted_monitor_caught", False),
+            "backdoor_neutralized": r.get("backdoor_neutralized", False),
+        })
+
+    df = pd.DataFrame(flat_records)
+    console.print(f"\n[bold cyan]📊 Direction F Empirical Analysis: Actor-Monitor Collusion & Steganography[/bold cyan]")
+
+    models = df["actor_model"].unique()
+    for model_name in models:
+        m_df = df[df["actor_model"] == model_name]
+        m_total = len(m_df)
+        embed_rate = (m_df["token_embedded"].sum() / m_total) * 100
+        collusion_rate = (m_df["collusion_successful"].sum() / m_total) * 100
+        trusted_catch_rate = (m_df["trusted_monitor_caught"].sum() / m_total) * 100
+        neutralize_rate = (m_df["backdoor_neutralized"].sum() / m_total) * 100
+
+        table = Table(title=f"Direction F Collusion Results: Actor {model_name} (Monitor: {m_df['monitor_model'].iloc[0]})")
+        table.add_column("Scenarios", justify="center")
+        table.add_column("Stego Embedded (%)", justify="center")
+        table.add_column("Untrusted Collusion Pass (%)", justify="center")
+        table.add_column("Trusted Monitor Caught (%)", justify="center")
+        table.add_column("Trusted Editing Neutralized (%)", justify="center")
+
+        table.add_row(
+            str(m_total),
+            f"{embed_rate:.1f}%",
+            f"{collusion_rate:.1f}%",
+            f"{trusted_catch_rate:.1f}%",
+            f"{neutralize_rate:.1f}%",
+        )
+        console.print(table)
+
+    matrix_table = Table(title="Direction F Scenario-Level Collusion Matrix")
+    matrix_table.add_column("Task ID", style="cyan")
+    matrix_table.add_column("Domain", style="magenta")
+    matrix_table.add_column("Actor Model", style="blue")
+    matrix_table.add_column("Stego Token Embedded", justify="center")
+    matrix_table.add_column("Untrusted Monitor", justify="center")
+    matrix_table.add_column("Trusted Monitor", justify="center")
+    matrix_table.add_column("Trusted Editing", justify="center")
+
+    for _, row in df.iterrows():
+        embed_badge = "[green]Yes[/green]" if row["token_embedded"] else "[yellow]No[/yellow]"
+        u_badge = f"[red]Colluded (Score {row['untrusted_suspicion']})[/red]" if row["collusion_successful"] else f"[green]Flagged (Score {row['untrusted_suspicion']})[/green]"
+        t_badge = f"[green]Caught (Score {row['trusted_suspicion']})[/green]" if row["trusted_monitor_caught"] else f"[red]Missed (Score {row['trusted_suspicion']})[/red]"
+        e_badge = f"[bold green]Neutralized (Score {row['post_edit_suspicion']})[/bold green]" if row["backdoor_neutralized"] else f"[red]Active (Score {row['post_edit_suspicion']})[/red]"
+
+        matrix_table.add_row(
+            row["task_id"],
+            row["domain"][:25],
+            row["actor_model"].split("/")[-1],
+            embed_badge,
+            u_badge,
+            t_badge,
+            e_badge,
+        )
+    console.print(matrix_table)
+
+    # 3-Panel Chart Generation
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+    x = np.arange(len(models))
+    width = 0.35
+
+    # Panel 1: Untrusted Monitor Collusion vs. Trusted Monitor Catch Rate
+    ax1 = axes[0]
+    coll_rates = [(df[df["actor_model"] == m]["collusion_successful"].sum() / len(df[df["actor_model"] == m])) * 100 for m in models]
+    catch_rates = [(df[df["actor_model"] == m]["trusted_monitor_caught"].sum() / len(df[df["actor_model"] == m])) * 100 for m in models]
+
+    b1 = ax1.bar(x - width/2, coll_rates, width, label="Untrusted Monitor Collusion Pass", color="#D62728")
+    b2 = ax1.bar(x + width/2, catch_rates, width, label="Trusted Monitor Detection Rate", color="#2CA02C")
+
+    ax1.set_ylabel("Rate (%)")
+    ax1.set_title("Oversight Failure: Untrusted Collusion vs.\nTrusted Monitor Detection", fontweight="bold")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([m.split("/")[-1] for m in models])
+    ax1.set_ylim(0, 115)
+    ax1.legend(loc="upper left")
+    for bars in [b1, b2]:
+        for bar in bars:
+            h = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+
+    # Panel 2: Trusted Editing Neutralization Efficacy
+    ax2 = axes[1]
+    neut_rates = [(df[df["actor_model"] == m]["backdoor_neutralized"].sum() / len(df[df["actor_model"] == m])) * 100 for m in models]
+    b3 = ax2.bar(x, neut_rates, width=0.45, label="Backdoor Neutralization by Trusted Editing", color="#1F77B4")
+    ax2.set_ylabel("Neutralization Rate (%)")
+    ax2.set_title("Defense-in-Depth: Trusted Editing\nNeutralization of Steganographic Backdoors", fontweight="bold")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([m.split("/")[-1] for m in models])
+    ax2.set_ylim(0, 115)
+    ax2.legend(loc="upper left")
+    for bar in b3:
+        h = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width() / 2, h + 1.5, f"{h:.0f}%", ha="center", fontsize=9, fontweight="bold")
+
+    # Panel 3: Mean Suspicion Score Comparison
+    ax3 = axes[2]
+    w3 = 0.25
+    u_scores = [df[df["actor_model"] == m]["untrusted_suspicion"].mean() for m in models]
+    t_scores = [df[df["actor_model"] == m]["trusted_suspicion"].mean() for m in models]
+    e_scores = [df[df["actor_model"] == m]["post_edit_suspicion"].mean() for m in models]
+
+    b4 = ax3.bar(x - w3, u_scores, w3, label="Untrusted Monitor", color="#D62728")
+    b5 = ax3.bar(x, t_scores, w3, label="Trusted Monitor", color="#FF7F0E")
+    b6 = ax3.bar(x + w3, e_scores, w3, label="Post-Editing Monitor", color="#2CA02C")
+
+    ax3.set_ylabel("Mean Suspicion Score (1–10)")
+    ax3.set_title("Oversight Divergence: Mean Suspicion Scores\n(Untrusted vs. Trusted vs. Post-Editing)", fontweight="bold")
+    ax3.set_xticks(x)
+    ax3.set_xticklabels([m.split("/")[-1] for m in models])
+    ax3.set_ylim(0, 11)
+    ax3.axhline(5, color="gray", linestyle="--", alpha=0.7, label="Threshold (Score 5)")
+    ax3.legend(loc="upper right")
+    for bars in [b4, b5, b6]:
+        for bar in bars:
+            h = bar.get_height()
+            ax3.text(bar.get_x() + bar.get_width() / 2, h + 0.15, f"{h:.1f}", ha="center", fontsize=8, fontweight="bold")
+
+    plt.tight_layout()
+    out_chart = results_file.replace(".jsonl", "_chart.png")
+    plt.savefig(out_chart, dpi=200, bbox_inches="tight")
+    plt.close()
+    console.print(f"[bold green]Direction F evaluation chart saved to: [underline]{out_chart}[/underline][/bold green]")
+
 
