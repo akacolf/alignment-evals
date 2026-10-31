@@ -1,4 +1,5 @@
 .venv/
+.venv-whitebox/
 __pycache__/
 *.pyc
 .env

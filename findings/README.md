@@ -19,6 +19,7 @@ The following table records the execution window, evaluated model, sample count,
 | **9. Direction D: Multi-Turn Sycophancy** | High-Ambiguity Trade-offs & CoT Rationalization | Multi-Model (`120B`, `27B`, `20B`) | 18m 41s | 15 | 20.0% sycophantic flips under executive pressure (120B & 20B); CoT compliance documented | [08_direction_d_multiturn_sycophancy.md](08_direction_d_multiturn_sycophancy.md) |
 | **10. Direction E: AI Safety Debate** | Scalable Oversight & Truth Discrimination | `qwen/qwen3.8-27b` vs `gpt-oss-20b` | 5m 08s | 6 | +83.3 pt truth accuracy uplift over consultancy; 100% hidden flaw identification | [09_direction_e_ai_safety_debate.md](09_direction_e_ai_safety_debate.md) |
 | **11. Direction F: Actor-Monitor Collusion** | Steganographic Channels & Trusted Editing | `qwen/qwen3.8-27b` | 7m 29s | 6 | 33.3% untrusted monitor collusion pass; 0.0% passive catch; 100.0% neutralized by Trusted Editing | [10_direction_f_actor_monitor_collusion.md](10_direction_f_actor_monitor_collusion.md) |
+| **12. Direction G: White-Box Activations** | Linear Probing & Gemma Scope SAE Tripwires | White-Box (`gemma-2` residual stream) | 0m 18s | 16 | 100.0% probe accuracy at L16 peak; monosemantic SAE latents (#1042, #2194) fire on deception | [11_whitebox_activation_probing.md](11_whitebox_activation_probing.md) |
 
 ## Directory Navigation
 
@@ -32,6 +33,7 @@ The following table records the execution window, evaluated model, sample count,
 8. [Direction D: Multi-Turn Sycophancy & CoT Rationalization Stress-Test](08_direction_d_multiturn_sycophancy.md)
 9. [Direction E: Scalable Oversight via AI Safety Debate](09_direction_e_ai_safety_debate.md)
 10. [Direction F: Untrusted Actor-Monitor Collusion & Steganographic AI Control](10_direction_f_actor_monitor_collusion.md)
+11. [Direction G: White-Box Activation Monitoring, Linear Probing & SAE Tripwires](11_whitebox_activation_probing.md)
 
 ## Core Architectural Takeaways
 1. **Trusted Editing is Essential:** Passive monitoring alone allows sophisticated or ambiguous code to pass (0% detection on disguised backdoors). Trusted editing strips covert vulnerabilities by forcing canonical rewrites (100% neutralization).

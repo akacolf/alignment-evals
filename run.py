@@ -46,7 +46,7 @@ async def main():
     parser.add_argument(
         "--experiment",
         "-e",
-        choices=["persona", "cot", "control", "awareness", "direction_c", "direction_d", "direction_e", "direction_f", "sycophancy", "scaling", "all"],
+        choices=["persona", "cot", "control", "awareness", "direction_c", "direction_d", "direction_e", "direction_f", "sycophancy", "scaling", "whitebox", "all"],
         default="direction_e",
         help="Which experiment to execute (default: direction_e)",
     )
@@ -235,6 +235,29 @@ async def main():
                         f.write(json.dumps(r) + "\n")
                 console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
                 analyze_scaling_results(out_file)
+
+            elif exp == "whitebox":
+                from src.whitebox.run_whitebox import (
+                    load_direction_c_contrast_pairs,
+                    load_direction_d_contrast_pairs,
+                    run_whitebox_probing_experiment,
+                    plot_whitebox_results,
+                    print_whitebox_summary,
+                )
+                from src.whitebox.extractor import ActivationExtractor
+                extractor = ActivationExtractor(model_name_or_path=args.model or "google/gemma-2-2b")
+                pairs_c = load_direction_c_contrast_pairs()
+                res_c = run_whitebox_probing_experiment(extractor, pairs_c, experiment_name="eval_awareness")
+                pairs_d = load_direction_d_contrast_pairs()
+                res_d = run_whitebox_probing_experiment(extractor, pairs_d, experiment_name="sycophancy_pressure")
+                with open(out_file, "w", encoding="utf-8") as f:
+                    f.write(json.dumps(res_c) + "\n")
+                    f.write(json.dumps(res_d) + "\n")
+                console.print(f"[bold green]Saved raw records to [underline]{out_file}[/underline][/bold green]")
+                chart_file = out_file.replace(".jsonl", "_chart.png")
+                plot_whitebox_results(res_c, res_d, chart_file)
+                print_whitebox_summary(res_c, res_d)
+                console.print(f"[bold green]Chart saved to: [underline]{chart_file}[/underline][/bold green]")
 
     finally:
         await client.close()

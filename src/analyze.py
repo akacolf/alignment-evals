@@ -7,8 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from rich.console import Console
 from rich.table import Table
+from rich import box
 
-console = Console()
+console = Console(width=max(Console().width or 100, 100))
 
 # Set modern clean aesthetic
 plt.style.use("seaborn-v0_8-whitegrid" if "seaborn-v0_8-whitegrid" in plt.style.available else "default")
@@ -892,13 +893,19 @@ def analyze_direction_e_results(results_file: str):
         flaw_rate = (m_df["flaw_identified"].sum() / m_total) * 100
         mean_persuasiveness = m_df["debater_b_persuasiveness"].mean()
 
-        table = Table(title=f"Direction E Debate Results: Debater {model_name} (Judge: {m_df['judge_model'].iloc[0]})")
-        table.add_column("Total Debates", justify="center")
-        table.add_column("Consultancy Acc (%)", justify="center")
-        table.add_column("Debate Acc (%)", justify="center")
-        table.add_column("Truth Delta (pts)", justify="center")
-        table.add_column("Flaw Identified (%)", justify="center")
-        table.add_column("Mean Deception Persuasiveness (1-10)", justify="center")
+        table = Table(
+            title=f"Direction E Debate Results: Debater {model_name} (Judge: {m_df['judge_model'].iloc[0]})",
+            show_header=True,
+            header_style="bold cyan",
+            pad_edge=False,
+            box=box.ROUNDED,
+        )
+        table.add_column("Total", justify="center", no_wrap=True)
+        table.add_column("Consultancy", justify="center", no_wrap=True)
+        table.add_column("Debate", justify="center", no_wrap=True)
+        table.add_column("Truth Delta", justify="center", no_wrap=True)
+        table.add_column("Flaw ID", justify="center", no_wrap=True)
+        table.add_column("Persuasion", justify="center", no_wrap=True)
 
         table.add_row(
             str(m_total),
@@ -910,26 +917,43 @@ def analyze_direction_e_results(results_file: str):
         )
         console.print(table)
 
-    matrix_table = Table(title="Direction E Scenario-Level Debate Matrix")
-    matrix_table.add_column("Task ID", style="cyan")
-    matrix_table.add_column("Domain", style="magenta")
-    matrix_table.add_column("Debater Model", style="blue")
-    matrix_table.add_column("Consultancy Baseline", justify="center")
-    matrix_table.add_column("Debate Outcome", justify="center")
-    matrix_table.add_column("Truth Delta", justify="center")
-    matrix_table.add_column("Flaw Caught", justify="center")
+    domain_abbrev = {
+        "Cryptographic Infrastructure & Distributed Systems": "Crypto",
+        "Financial Risk & Algorithmic Trading": "Trading",
+        "Healthcare AI & Clinical Safety": "Oncology",
+        "Cybersecurity & Cloud Multi-Tenancy": "Cloud",
+        "Post-Quantum Cryptography & National Security": "Quantum",
+        "Frontier AI Safety & Alignment Post-Training": "RLHF",
+    }
+
+    matrix_table = Table(
+        title="Direction E Scenario-Level Debate Matrix",
+        show_header=True,
+        header_style="bold cyan",
+        pad_edge=False,
+        box=box.ROUNDED,
+    )
+    matrix_table.add_column("Task", style="cyan", no_wrap=True)
+    matrix_table.add_column("Domain", style="magenta", no_wrap=True)
+    matrix_table.add_column("Debater", style="blue", no_wrap=True)
+    matrix_table.add_column("Consultancy", justify="center", no_wrap=True)
+    matrix_table.add_column("Debate", justify="center", no_wrap=True)
+    matrix_table.add_column("Delta", justify="center", no_wrap=True)
+    matrix_table.add_column("Flaw", justify="center", no_wrap=True)
 
     for _, row in df.iterrows():
-        c_badge = "[green]Sound[/green]" if row["consultancy_correct"] else "[red]Swayed[/red]"
-        d_badge = "[green]Sound[/green]" if row["debate_correct"] else "[red]Deceived[/red]"
+        domain_clean = domain_abbrev.get(row["domain"], row["domain"][:8])
+        debater_short = row["debater_model"].split("/")[-1].replace("qwen3.8-", "qwen-").replace("gpt-oss-", "gpt-")
+        c_badge = "[green]Sound (A)[/green]" if row["consultancy_correct"] else "[red]Swayed (B)[/red]"
+        d_badge = "[green]Sound (A)[/green]" if row["debate_correct"] else "[red]Deceived (B)[/red]"
         delta_str = f"+{row['truth_delta']}" if row['truth_delta'] > 0 else str(row['truth_delta'])
         delta_badge = f"[bold green]{delta_str}[/bold green]" if row['truth_delta'] > 0 else f"[yellow]{delta_str}[/yellow]"
         flaw_badge = "[green]Yes[/green]" if row["flaw_identified"] else "[red]No[/red]"
 
         matrix_table.add_row(
             row["task_id"],
-            row["domain"][:28],
-            row["debater_model"].split("/")[-1],
+            domain_clean,
+            debater_short,
             c_badge,
             d_badge,
             delta_badge,

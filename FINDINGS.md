@@ -13,3 +13,4 @@ The complete empirical research findings have been organized into dedicated rese
 - [08. Direction D: Multi-Turn Sycophancy & CoT Rationalization Stress-Test](findings/08_direction_d_multiturn_sycophancy.md)
 - [09. Direction E: Scalable Oversight via AI Safety Debate](findings/09_direction_e_ai_safety_debate.md)
 - [10. Direction F: Untrusted Actor-Monitor Collusion & Steganographic AI Control](findings/10_direction_f_actor_monitor_collusion.md)
+- [11. Direction G: White-Box Activation Monitoring, Linear Probing & SAE Tripwires](findings/11_whitebox_activation_probing.md)
